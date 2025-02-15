@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waypoint Recording - TrackONWater</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="waypoints.js" defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+</head>
+<body>
+
+  <div class="container">
+    <header class="main-header">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="logo">TrackONWater</div>
+          <nav class="main-nav">
+            <ul>
+              <li><a href="dashboard.html">Home</a></li>
+              <li><a href="devices.html">Devices</a></li>
+              <li class="active"><a href="waypoints.html">Waypoints</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="logout-container">
+          <button onclick="logout()" class="logout-button">Log Out</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <h2>Waypoint Recording</h2>
+
+      <section class="waypoint-controls">
+        <h3>Start a New Recording</h3>
+        <form id="waypointForm">
+          <label for="eventSelect">Select Event:</label>
+          <select id="eventSelect" required></select>
+
+          <label for="deviceSelect">Select Tracker:</label>
+          <select id="deviceSelect" required></select>
+
+          <label for="maxPoints">Max Recording Points:</label>
+          <input type="number" id="maxPoints" min="1" value="10" required>
+
+          <button type="submit">Start Recording</button>
+        </form>
+      </section>
+
+      <section class="waypoint-process">
+        <h3>Recording Status</h3>
+        <table id="processTable">
+          <thead>
+            <tr>
+              <th>Tracker UID</th>
+              <th>Event</th>
+              <th>Max Points</th>
+              <th>Recorded</th>
+              <th>Progress</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="waypoint-list">
+        <h3>Recorded Waypoints</h3>
+        <table id="waypointTable">
+          <thead>
+            <tr>
+              <th>Waypoint ID</th>
+              <th>Latitude</th>
+              <th>Longitude</th>
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="map-section">
+        <h3>Waypoint Map</h3>
+        <div id="map"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 TrackONWater</p>
+    </footer>
+  </div>
+</body>
+</html>

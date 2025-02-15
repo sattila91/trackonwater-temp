@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackONWater Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js" defer></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAfRaybP0e4hmSGEHGCGbaxMB4REm5ArHI&libraries=geometry&loading=async&callback=initMap"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dashboard</h1>
+        </header>
+        <main>
+            <!-- Stats and Map Container -->
+            <section class="stats-map-container">
+                <div class="chart-container">
+                    <h2>Statistics</h2>
+                    <canvas id="msgChart"></canvas>
+                </div>
+                <div class="map-container">
+                    <h2>Tracker Locations</h2>
+                    <div id="map"></div>
+                </div>
+            </section>
+
+            <!-- Tracker Data Table -->
+            <section class="tracker-data">
+                <h2>Tracker Data</h2>
+                <table id="trackerTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable(0)">Tracker UID &#9650;&#9660;</th>
+                            <th>Last Data</th>
+                            <th onclick="sortTable(2)">Last Timestamp &#9650;&#9660;</th>
+                            <th onclick="sortTable(3)">Message Count &#9650;&#9660;</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+<button id="clearSelectionButton" class="clear-button" style="display: none;">Clear Selection</button>
+
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2025 TrackONWater</p>
+            <button onclick="logout()" class="logout-button">Log Out</button>
+        </footer>
+    </div>
+</body>
+</html>

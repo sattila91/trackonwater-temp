@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Key Management - TrackONWater Admin</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Sticky Header with Logo, Navigation, and Logout -->
+    <header class="main-header">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="logo">TrackONWater Admin</div>
+          <nav class="main-nav">
+            <ul>
+              <li><a href="dashboard.html">Home</a></li>
+              <li><a href="devices.html">Devices</a></li>
+              <li class="active"><a href="apikey-management.html">API Keys</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="logout-container">
+          <button onclick="logout()" class="logout-button">Log Out</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Existing API Keys Section -->
+      <section class="api-key-management">
+  <h2 class="api-key-management__title">Existing API Keys</h2>
+  <div class="api-key-management__table-container">
+    <table class="api-key-management__table">
+      <thead class="api-key-management__table-head">
+        <tr class="api-key-management__table-row">
+          <th class="api-key-management__table-header" onclick="sortApiKeysTable(0)">Event</th>
+          <th class="api-key-management__table-header">API Key</th>
+          <th class="api-key-management__table-header" onclick="sortApiKeysTable(2)">Generated At</th>
+          <th class="api-key-management__table-header">Status</th>
+          <th class="api-key-management__table-header">Action</th>
+        </tr>
+      </thead>
+      <tbody class="api-key-management__table-body">
+        <!-- API keys will be dynamically inserted here -->
+      </tbody>
+    </table>
+  </div>
+</section>
+
+      <!-- Create New API Key Section -->
+      <section class="api-key-management">
+        <h2 class="api-key-management__title">Create New API Key</h2>
+        <form id="apiKeyForm" class="api-key-management__form">
+          <label for="event" class="api-key-management__label">Event:</label>
+          <input type="text" id="event" name="event" class="api-key-management__input" required>
+          <button type="submit" class="api-key-management__submit-button">Generate API Key</button>
+        </form>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <p>&copy; 2025 TrackONWater</p>
+    </footer>
+  </div>
+</body>
+</html>

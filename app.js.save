@@ -1,0 +1,206 @@
+require('dotenv').config(); // For parsing .env file
+const express = require('express');
+const https = require('https');
+const fs = require('fs');
+
+const app = express();
+app.use(express.json()); // Middleware to parse JSON bodies
+const port = process.env.PORT || 8080; // Default to port 8080
+
+// In-memory objects
+let apiKeysData = {};  // In-memory object for events API keys
+let trackersEventsData = {}; // In-memory object for trackers events
+let trackersData = {}; // In-memory object for tracker data (tracker_uid: JSON object)
+
+// Middleware to check for X-API-Key in request headers
+function checkAdminAuth(req, res, next) {
+    const adminKey = req.headers['x-api-key'];
+    if (adminKey === process.env.ADMIN_APKEY) {
+        return next();
+    } else {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+}
+
+// Middleware to check the event's API key for tracker data access
+function checkEventAuth(req, res, next) {
+    const eventKey = req.headers['x-api-key'];
+    const eventid = req.params.eventid;
+    if (apiKeysData[eventid] && apiKeysData[eventid] === eventKey) {
+        return next();
+    } else {
+        return res.status(403).json({ error: 'Unauthorized for event' });
+    }
+}
+
+// Function to read and parse JSON files
+function readJsonFile(filePath) {
+    try {
+        const data = fs.readFileSync(filePath, 'utf8');
+        return JSON.parse(data);
+    } catch (err) {
+        console.error(`Error reading file from ${filePath}`, err);
+        return null; // Return null if there's an error
+    }
+}
+
+// Function to write and update JSON files
+function writeJsonFile(filePath, data) {
+    try {
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+        return true;
+    } catch (err) {
+        console.error(`Error writing file to ${filePath}`, err);
+        return false; // Return false if there's an error
+    }
+}
+
+// Function to validate API keys JSON structure
+function validateApiKeys(data) {
+    if (typeof data !== 'object' || Array.isArray(data)) return false;
+    
+    for (let key in data) {
+        if (typeof key !== 'string' || typeof data[key] !== 'string') {
+            return false; // Keys and values should both be strings
+        }
+    }
+    return true;
+}
+
+// Function to validate Trackers Events JSON structure
+function validateTrackersEvents(data) {
+    if (typeof data !== 'object' || Array.isArray(data)) return false;
+
+    for (let key in data) {
+        if (typeof key !== 'string' || typeof data[key] !== 'string') {
+            return false; // Keys and values should both be strings
+        }
+    }
+    return true;
+}
+
+// Load initial data
+function loadInitialData() {
+    apiKeysData = readJsonFile(process.env.LOCAL_DB_EVENTS_APIKEYS_FILE_PATH) || {};
+    trackersEventsData = readJsonFile(process.env.LOCAL_DB_TRACKERS_EVENTS_FILE_PATH) || {};
+}
+
+// Admin GET endpoint to retrieve events API keys
+app.get('/admin/files/events_apikeys', checkAdminAuth, (req, res) => {
+    const apiKeys = readJsonFile(process.env.LOCAL_DB_EVENTS_APIKEYS_FILE_PATH);
+    if (apiKeys) {
+        return res.json(apiKeys);
+    } else {
+        return res.status(500).json({ error: 'Failed to read events API keys.' });
+    }
+});
+
+// Admin GET endpoint to retrieve trackers events
+app.get('/admin/files/trackers_events', checkAdminAuth, (req, res) => {
+    const trackersEvents = readJsonFile(process.env.LOCAL_DB_TRACKERS_EVENTS_FILE_PATH);
+    if (trackersEvents) {
+        return res.json(trackersEvents);
+    } else {
+        return res.status(500).json({ error: 'Failed to read trackers events.' });
+    }
+});
+
+// Admin POST endpoint to update events API keys
+app.post('/admin/files/events_apikeys', checkAdminAuth, (req, res) => {
+    const newApiKeys = req.body; // Expecting JSON object in the body
+
+    // Validate the incoming JSON structure
+    if (!validateApiKeys(newApiKeys)) {
+        return res.status(400).json({ error: 'Invalid events API keys format.' });
+    }
+
+    // Update file and memory
+    if (writeJsonFile(process.env.LOCAL_DB_EVENTS_APIKEYS_FILE_PATH, newApiKeys)) {
+        apiKeysData = newApiKeys; // Update in-memory object
+        return res.status(200).json({ message: 'Events API keys updated successfully.' });
+    } else {
+        return res.status(500).json({ error: 'Failed to update events API keys.' });
+    }
+});
+
+// Admin POST endpoint to update trackers events
+app.post('/admin/files/trackers_events', checkAdminAuth, (req, res) => {
+    const newTrackersEvents = req.body; // Expecting JSON object in the body
+
+    // Validate the incoming JSON structure
+    if (!validateTrackersEvents(newTrackersEvents)) {
+        return res.status(400).json({ error: 'Invalid trackers events format.' });
+    }
+
+    // Update file and memory
+    if (writeJsonFile(process.env.LOCAL_DB_TRACKERS_EVENTS_FILE_PATH, newTrackersEvents)) {
+        trackersEventsData = newTrackersEvents; // Update in-memory object
+        return res.status(200).json({ message: 'Trackers events updated successfully.' });
+    } else {
+        return res.status(500).json({ error: 'Failed to update trackers events.' });
+    }
+});
+
+// New POST endpoint to update tracker_uid data in memory
+app.post('/data/:tracker_uid', (req, res) => {
+    const trackerUid = req.params.tracker_uid;
+    const trackerData = req.body; // Expecting JSON object in the body
+
+    // Validate tracker_uid format (tonw-0000 to tonw-9999)
+    const trackerUidPattern = /^tonw-\d{4}$/;
+    if (!trackerUidPattern.test(trackerUid)) {
+        return res.status(400).json({ error: 'Invalid tracker_uid format. Expecting tonw-0000 to tonw-9999.' });
+    }
+
+    // Validate tracker data (must be a JSON object)
+    if (typeof trackerData !== 'object') {
+        return res.status(400).json({ error: 'Invalid tracker data format. Expecting JSON object.' });
+    }
+
+    // Update the tracker data in memory
+    trackersData[trackerUid] = trackerData;
+
+    return res.status(200).json({ message: `Data for tracker ${trackerUid} updated successfully.` });
+});
+// New GET endpoint to retrieve all tracker data belonging to an event
+app.get('/data/:eventid', checkEventAuth, (req, res) => {
+    const eventid = req.params.eventid;
+    const trackerUidsForEvent = [];
+
+    // Find tracker uids associated with the event
+    for (let trackerUid in trackersEventsData) {
+        if (trackersEventsData[trackerUid] === eventid) {
+            trackerUidsForEvent.push({ tracker_uid: trackerUid, data: trackersData[trackerUid] });
+        }
+    }
+
+    // Return the tracker data for the event
+    return res.status(200).json(trackerUidsForEvent);
+});
+
+// Load initial data when the server starts
+loadInitialData();
+
+// Load SSL settings from .env
+const sslEnabled = process.env.SSL_ENABLED === 'true';
+const options = sslEnabled ? {
+    key: fs.readFileSync(process.env.SSL_KEY_PATH),
+    cert: fs.readFileSync(process.env.SSL_CERT_PATH),
+} : {};
+
+// Start HTTPS server
+const server = sslEnabled
+    ? https.createServer(options, app)
+    : app.listen(port, () => {
+        console.log(`Server running on http://localhost:${port}`);
+    });
+
+if (sslEnabled) {
+    server.listen(port, () => {
+        console.log(`Server running on https://localhost:${port}`);
+    });
+} else {
+    app.listen(port, () => {
+        console.log(`Server running on http://localhost:${port}`);
+    });
+}
